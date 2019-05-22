@@ -8,17 +8,12 @@ jobs:
       vmImage: 'Ubuntu-16.04'
     strategy:
       matrix:
-        gccdefault_coverage:
-          CMAKE_VARIANT: Debug
-          CXXFLAGS: '-fprofile-arcs --coverage'
-          CXX: g++
-          CC: gcc
-          INSTALL_PPAS: sudo apt install lcov -y
-          SKIP_COVERAGE: 'false'
         gcc7debug:
           CMAKE_VARIANT: Debug
+          CXXFLAGS: '-fprofile-arcs --coverage'
           CXX: g++-7
           CC: gcc-7
+          SKIP_COVERAGE: 'false'
           INSTALL_PPAS: sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         gcc8release:
           CMAKE_VARIANT: Release
@@ -45,11 +40,11 @@ jobs:
         #   CXX: clang
         #   CC: clang
     steps:
-      - script: $INSTALL_PPAS && sudo apt-get update -y && sudo apt-get install $CXX binutils-gold cmake -y
+      - script: $INSTALL_PPAS && sudo apt-get update -y && sudo apt-get install $CXX binutils-gold cmake lcov  -y
         displayName: 'Install compiler'
       - script: ./tools/get_boost.sh
         displayName: 'Get Boost'
-      - script: cmake -H. -Bbuild -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold -DUFIBER_SANITIZE=$SANITIZE -DCMAKE_BUILD_TYPE=$CMAKE_VARIANT && make -C build
+      - bash: cmake -H. -Bbuild -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold -DCMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake -DUFIBER_SANITIZE=$SANITIZE -DCMAKE_BUILD_TYPE=$CMAKE_VARIANT && make -C build
         displayName: 'Build'
       - script: cd build && ctest --output-on-failure
         displayName: 'Run tests'
@@ -71,7 +66,7 @@ jobs:
     steps:
       - script: brew install boost
         displayName: Brew install dependencies
-      - script: cmake -H. -Bbuild -DUFIBER_SANITIZE=$SANITIZE -DCMAKE_BUILD_TYPE=$CMAKE_VARIANT && make -C build
+      - bash: cmake -H. -Bbuild -DUFIBER_SANITIZE=$SANITIZE -DCMAKE_BUILD_TYPE=$CMAKE_VARIANT && make -C build
         displayName: 'Build'
       - script: cd build && ctest --output-on-failure
         displayName: 'Run tests'
